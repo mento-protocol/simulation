@@ -108,9 +108,8 @@ class ArbitrageTrading(TraderStrategy):
                 market_price,
                 spread
             )
-        else:
-            self.order = {"sell_amount": None}
-        self.sell_amount = self.order["sell_amount"]
+
+        # self.sell_amount = self.order["sell_amount"]
 
     def sell_order_stable(self, buckets: MentoBuckets, market_price: float, spread: float):
         """
@@ -127,13 +126,9 @@ class ArbitrageTrading(TraderStrategy):
             spread
         )
 
-        self.order = {
-            "sell_amount": min(
-                sell_amount,
-                max_budget_stable,
-            ),
-            "sell_reserve_asset": False,
-        }
+        self.order.sell_amount = min(sell_amount,
+                                     max_budget_stable,)
+        self.order.sell_reserve_asset = False
 
     def sell_order_reserve_asset(
             self,
@@ -154,15 +149,12 @@ class ArbitrageTrading(TraderStrategy):
             spread
         )
 
-        self.order = {
-            "sell_amount": min(
-                sell_amount,
-                max_budget_celo,
-            ),
-            "sell_reserve_asset": True,
-        }
+        self.order.sell_amount = min(sell_amount,
+                                     max_budget_celo,)
+        self.order.sell_reserve_asset = True
 
     # pylint: disable=no-self-use
+
     def optimal_sell_amount(self, bucket_sell, bucket_buy, price_buy_sell, spread):
         """
         bucket_sell: bucket of asset that is sold

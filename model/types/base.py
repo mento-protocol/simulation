@@ -79,3 +79,19 @@ class AggregationMethod(Enum):
 
 class OracleType(Enum):
     SINGLE_SOURCE = 'single_source'
+
+
+class Exchange(SerializableEnum):
+    MENTO = 'mento'
+    GENERAL_MARKET = 'general_market'
+
+# pylint:disable = too-few-public-methods
+
+
+class Order():
+    def __init__(self, asset, sell_amount, buy_amount, sell_reserve_asset, exchange):
+        self.asset: Currency = asset
+        self.sell_amount: float = sell_amount
+        self.buy_amount: float = buy_amount
+        self.sell_reserve_asset: bool = sell_reserve_asset
+        self.exchange: Exchange = exchange

@@ -54,22 +54,21 @@ class Trader(Account):
         """
         Execute the agent's state change
         """
-        order = self.strategy.return_optimal_trade(params, prev_state)
-        if order is None:
+        self.strategy.create_order(params, prev_state)
+        if self.strategy.order.sell_amount is None:
             return {
                 "mento_buckets": prev_state["mento_buckets"],
                 "floating_supply": prev_state["floating_supply"],
                 "reserve_balance": prev_state["reserve_balance"],
             }
 
-        sell_amount = order["sell_amount"]
-        sell_reserve_asset = order["sell_reserve_asset"]
-        self.rebalance_portfolio(sell_amount, sell_reserve_asset, prev_state)
+        self.rebalance_portfolio(self.strategy.order.sell_amount,
+                                 self.strategy.order.sell_reserve_asset, prev_state)
 
         next_bucket, delta = self.mento.exchange(
             self.config.exchange,
-            sell_amount,
-            sell_reserve_asset,
+            self.strategy.order.sell_amount,
+            self.strategy.order.sell_reserve_asset,
             prev_state
         )
 
