@@ -1,4 +1,4 @@
-# cLabs Mento2 Model
+# Mento2 Model
 
 A modular dynamical-systems model of the Mento2.0 design, based on the open-source Python library [radCAD](https://github.com/CADLabs/radCAD), an extension to [cadCAD](https://cadcad.org).
 
@@ -91,8 +91,9 @@ The [Differential Model Specification](https://hackmd.io/@CADLabs/HyENPQ36u) dep
 
 ## Environment Setup
 
-1. Clone or download the Git repository: `git clone https://github.com/celo-org/mento2-model` or using GitHub Desktop
-2. Set up your development environment using one of the following two options:
+1. Clone or download the Git repository: `git clone https://github.com/mento-protocol/simulation` or using GitHub Desktop
+2. Pull data files via git-lfs: `git lfs pull`
+3. Set up your development environment using one of the following two options:
 
 ### Option 1: Your usual python workflow
 
@@ -106,7 +107,7 @@ and Pipenv automatically creates virtual environments and installs and updates p
 
 1) Install [Pyenv](https://github.com/pyenv/pyenv)
 2) Install [Pipenv](https://github.com/pypa/pipenv)
-3) Navigate to your `\mento2-model` folder
+3) Navigate to your `\simulation` folder
 4) install python 3.8.12: `pyenv install  3.8.12`
 5) Set your local python version `pyenv local  3.8.12`
 7) Install dependencies: `pipenv install --dev`
@@ -177,18 +178,18 @@ Since we borrow so heavily from previous work, we would like to thank:
 ## Contributors ✨
 
 ## License
-The code repository `celo-org/mento2-model` is licensed under the GNU General Public License v3.0.
+The code repository `mento-protocol/simulation` is licensed under the GNU General Public License v3.0.
 Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
 If you'd like to cite this code and/or research, we suggest the following format:
-> cLabs, Mento2 Model, (2021), GitHub repository, https://github.com/celo-org/mento2-model
+> Mento Labs, Mento 2.0 Model, (2022), GitHub repository, https://github.com/mento-protocol/simulation
 
 ```latex
 
-[comment]: <> (@misc{cLabs2022,)
+[comment]: <> (@misc{MentoLabs2022,)
 
-[comment]: <> (  author = {cLabs},)
+[comment]: <> (  author = {MentoLabs},)
 
-[comment]: <> (  title = {Mento2 Model},)
+[comment]: <> (  title = {Mento 2.0 Model},)
 
 [comment]: <> (  year = {2022},)
 
@@ -196,7 +197,7 @@ If you'd like to cite this code and/or research, we suggest the following format
 
 [comment]: <> (  journal = {GitHub repository},)
 
-[comment]: <> (  howpublished = {\url{https://github.com/celo-org/mento2-model}},)
+[comment]: <> (  howpublished = {\url{https://github.com/mento-protocol/simulation}},)
 
 [comment]: <> (  version = {v0.0.0})
 
