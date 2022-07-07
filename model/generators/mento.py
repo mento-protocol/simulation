@@ -5,11 +5,13 @@ Handles one or more mento instances
 """
 
 from copy import deepcopy
+from functools import cached_property
 from typing import TYPE_CHECKING, Any, Dict, Set
 import numpy as np
 
 from model.constants import blocktime_seconds
 from model.entities.balance import Balance
+from model.types.order import Order
 from model.utils.generator_container import GeneratorContainer
 from model.types.base import MentoBuckets, MentoExchange, Stable
 from model.types.pair import Pair
@@ -41,19 +43,23 @@ class MentoExchangeGenerator(Generator):
 
     def __init__(self, configs: Dict[Stable, MentoExchangeConfig],
                  active_exchanges: Set[Stable], container: GeneratorContainer):
-        from model.generators.accounts import AccountGenerator
         self.configs = configs
         self.active_exchanges = active_exchanges
         self.container = container
-        self.account_generator = self.container.get(AccountGenerator)
+    
 
-    @ classmethod
+    @classmethod
     def from_parameters(cls, params, _initial_state, container):
         return cls(
             params['mento_exchanges_config'],
             set(params['mento_exchanges_active']),
             container
         )
+    
+    @cached_property
+    def account_generator(self):
+        from model.generators.accounts import AccountGenerator
+        return self.container.get(AccountGenerator)
 
     @state_update_blocks('bucket_update')
     def bucket_update(self):
@@ -184,11 +190,11 @@ class MentoExchangeGenerator(Generator):
 
         return (next_bucket, delta)
 
-    def process_order(self, order, prev_state):
+    def process_order(self, order: Order, prev_state):
         next_bucket, delta = self.exchange(
             order.account.config.exchange,
-            order.strategy.order.sell_amount,
-            order.strategy.order.sell_reserve_asset,
+            order.sell_amount,
+            order.sell_reserve_asset,
             prev_state
         )
 
@@ -200,5 +206,5 @@ class MentoExchangeGenerator(Generator):
         self.account_generator.reserve.balance += reserve_delta
 
         next_buckets = deepcopy(prev_state["mento_buckets"])
-        next_buckets[order.config.exchange] = next_bucket
+        next_buckets[order.exchange] = next_bucket
         return next_buckets
