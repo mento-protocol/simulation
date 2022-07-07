@@ -21,7 +21,6 @@ simulation = Simulation(
     timesteps=TIMESTEPS,
     runs=MONTE_CARLO_RUNS
 )
-simulation.engine = Engine()
 
 # Create Experiment of single Simulation
 experiment = Experiment([simulation])

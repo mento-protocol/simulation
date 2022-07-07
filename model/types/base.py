@@ -2,7 +2,7 @@
 Various Python types used in the model
 """
 from __future__ import annotations
-from typing import TypedDict, Union
+from typing import Dict, TypedDict, Union
 from enum import Enum
 
 
@@ -35,6 +35,8 @@ class CryptoAsset(SerializableEnum):
     BTC = "btc"
     DAI = "dai"
 
+class Token(SerializableEnum):
+    CP = "cp" # Collateral provider tokens
 
 class Fiat(SerializableEnum):
     USD = "usd"
@@ -48,7 +50,7 @@ class MentoExchange(SerializableEnum):
     CEUR_CELO = "ceur_celo"
 
 
-Currency = Union[Stable, Fiat, CryptoAsset]
+Currency = Union[Stable, Fiat, CryptoAsset, Token]
 
 
 class MentoBuckets(TypedDict):
@@ -79,3 +81,10 @@ class AggregationMethod(Enum):
 
 class OracleType(Enum):
     SINGLE_SOURCE = 'single_source'
+
+class CollateralProviderState(TypedDict):
+    stable_basket: float
+    reserve_asset_basket: float
+    minted_cp_tokens: float
+
+CollateralProviderStates = Dict[MentoExchange, CollateralProviderState]

@@ -33,6 +33,7 @@ cvxpy = "1.1.18"
 fastparquet = "*"
 line-profiler = "*"
 typing-extensions = "*"
+pytest = "*"
 
 [dev-packages]
 flake8-import-order = "*"

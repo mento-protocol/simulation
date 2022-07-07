@@ -9,6 +9,7 @@ from typing import Dict, TypedDict
 
 
 from model.types.base import (
+    CollateralProvierStates,
     CryptoAsset,
     Fiat,
     MentoBuckets,
@@ -38,6 +39,7 @@ class StateVariables(TypedDict):
     reserve_balance_in_usd: float
     floating_supply_stables_in_usd: float
     reserve_ratio: float
+    collateral_provider: CollateralProviderStates
 
 
 # Initialize State Variables instance with default values
