@@ -24,20 +24,20 @@ class CollateralProviderContract:
     def __init__(self, exchange: MentoExchange, config: MentoExchangeConfig):
         self.pair = Pair(config.stable, config.reserve_asset)
         self.exchange = exchange
-    
+
     @property
     def stable_asset(self) -> Stable:
         return self.pair.quote
-    
+
     @property
     def reserve_asset(self) -> CryptoAsset:
         return self.pair.base
-    
+
     def deposit(
         self,
         state: StateVariables,
         total_to_deposit_in_reserve_asset: float
-    ) -> Tuple[CollateralProviderState, Balance]: 
+    ) -> Tuple[CollateralProviderState, Balance]:
         with self.set_state(state):
             required_reserve_asset_fraction = self.required_reserve_asset_fraction
             reserve_asset_to_deposit = total_to_deposit_in_reserve_asset * required_reserve_asset_fraction
@@ -83,12 +83,12 @@ class CollateralProviderContract:
     @with_state
     def reserve_asset_basket(self) -> float:
         return self.__state__['reserve_asset_basket']
-    
+
     @property
     @with_state
     def cp_tokens_per_reserve_asset(self) -> float:
         return self.minted_cp_tokens / self.total_value_in_reserve_asset
-    
+
     @property
     @with_state
     def required_reserve_asset_fraction(self) -> float:
@@ -96,13 +96,13 @@ class CollateralProviderContract:
             return 1
         else:
             return self.reserve_asset_basket / self.total_value_in_reserve_asset
-    
+
     @property
     @with_state
     def total_value_in_reserve_asset(self) -> float:
         stable_to_reserve_rate = self.pair.inverse.get_rate(self.__global_state__)
         return (
-            self.reserve_asset_basket + 
+            self.reserve_asset_basket +
             self.stable_basket * stable_to_reserve_rate
         )
 

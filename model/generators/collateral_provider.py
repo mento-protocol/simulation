@@ -23,8 +23,8 @@ class CollateralProviderGenerator(Generator):
         }
 
     def deposit(
-        self, 
-        state: StateVariables, 
+        self,
+        state: StateVariables,
         exchange: MentoExchange,
         account: Account,
         total_to_deposit_in_reserve_asset: float
@@ -32,7 +32,7 @@ class CollateralProviderGenerator(Generator):
         next_state, account_delta = self.contracts.get(exchange).deposit(state, total_to_deposit_in_reserve_asset)
         account_balance_after_deposit = account.balance + account_delta
         assert (
-            not account_balance_after_deposit.any_negative(), 
+            not account_balance_after_deposit.any_negative(),
             "Account doesn't have enough balance to deposit"
         )
 
@@ -40,8 +40,8 @@ class CollateralProviderGenerator(Generator):
         return next_state
 
     def withdraw(
-        self, 
-        state: StateVariables, 
+        self,
+        state: StateVariables,
         exchange: MentoExchange,
         account: Account,
         cp_tokens_to_withdraw: float
@@ -49,13 +49,9 @@ class CollateralProviderGenerator(Generator):
         next_state, account_delta = self.contracts.get(exchange).withdraw(state, cp_tokens_to_withdraw)
         account_balance_after_deposit = account.balance + account_delta
         assert (
-            not account_balance_after_deposit.any_negative(), 
+            not account_balance_after_deposit.any_negative(),
             "Account doesn't have enough balance to deposit"
         )
 
         account.balance = account_balance_after_deposit
         return next_state
-
-
-
-    
