@@ -13,8 +13,9 @@ import logging
 from cvxpy import Maximize, Minimize, Problem, Variable
 import cvxpy
 
-from model.types.base import MentoBuckets, Order
+from model.types.base import MentoBuckets
 from model.types.pair import Pair
+from model.types.order import Order
 from model.types.configs import MentoExchangeConfig
 if TYPE_CHECKING:
     from model.entities.trader import Trader
@@ -43,7 +44,8 @@ class TraderStrategy:
         self.optimization_direction = None
         self.constraints = []
         # TODO order vs sell_amount ???
-        self.order = Order(asset=None,
+        self.order = Order(account=self.parent,
+                           asset=None,
                            sell_amount=None,
                            buy_amount=None,
                            sell_reserve_asset=None,

@@ -9,7 +9,8 @@ from uuid import UUID
 
 from model.generators.mento import MentoExchangeGenerator
 from model.entities import strategies
-from model.entities.account import Account, Balance
+from model.entities.account import Account
+from model.entities.balance import Balance
 from model.types.pair import Pair
 from model.types.configs import MentoExchangeConfig, TraderConfig
 from model.utils.rng_provider import RNGProvider
@@ -65,22 +66,7 @@ class Trader(Account):
         self.rebalance_portfolio(self.strategy.order.sell_amount,
                                  self.strategy.order.sell_reserve_asset, prev_state)
 
-        next_bucket, delta = self.mento.exchange(
-            self.config.exchange,
-            self.strategy.order.sell_amount,
-            self.strategy.order.sell_reserve_asset,
-            prev_state
-        )
-
-        self.balance += delta
-        reserve_delta = Balance({
-            self.exchange_config.reserve_asset:
-                -1 * delta.get(self.exchange_config.reserve_asset),
-        })
-        self.parent.reserve.balance += reserve_delta
-
-        next_buckets = deepcopy(prev_state["mento_buckets"])
-        next_buckets[self.config.exchange] = next_bucket
+        next_buckets = self.mento.process_order(self.strategy.order, prev_state)
 
         return {
             "mento_buckets": next_buckets,

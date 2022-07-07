@@ -4,16 +4,22 @@ Mento generator
 Handles one or more mento instances
 """
 
-from typing import Any, Dict, Set
+from copy import deepcopy
+from typing import TYPE_CHECKING, Any, Dict, Set
 import numpy as np
 
 from model.constants import blocktime_seconds
 from model.entities.balance import Balance
+from model.utils.generator_container import GeneratorContainer
 from model.types.base import MentoBuckets, MentoExchange, Stable
 from model.types.pair import Pair
 from model.types.configs import MentoExchangeConfig
 from model.utils.generator import Generator, state_update_blocks
 from model.utils import update_from_signal
+
+# if TYPE_CHECKING:
+#    from model.entities.balance import Balance
+#    from model.generators.accounts import AccountGenerator
 
 # raise numpy warnings as errors
 np.seterr(all='raise')
@@ -31,16 +37,22 @@ class MentoExchangeGenerator(Generator):
     """
     configs: Dict[MentoExchange, MentoExchangeConfig]
     active_exchanges: Set[MentoExchange]
+    container: GeneratorContainer
 
-    def __init__(self, configs: Dict[Stable, MentoExchangeConfig], active_exchanges: Set[Stable]):
+    def __init__(self, configs: Dict[Stable, MentoExchangeConfig],
+                 active_exchanges: Set[Stable], container: GeneratorContainer):
+        from model.generators.accounts import AccountGenerator
         self.configs = configs
         self.active_exchanges = active_exchanges
+        self.container = container
+        self.account_generator = self.container.get(AccountGenerator)
 
-    @classmethod
-    def from_parameters(cls, params, _initial_state, _container):
+    @ classmethod
+    def from_parameters(cls, params, _initial_state, container):
         return cls(
             params['mento_exchanges_config'],
-            set(params['mento_exchanges_active'])
+            set(params['mento_exchanges_active']),
+            container
         )
 
     @state_update_blocks('bucket_update')
@@ -171,3 +183,22 @@ class MentoExchangeGenerator(Generator):
         })
 
         return (next_bucket, delta)
+
+    def process_order(self, order, prev_state):
+        next_bucket, delta = self.exchange(
+            order.account.config.exchange,
+            order.strategy.order.sell_amount,
+            order.strategy.order.sell_reserve_asset,
+            prev_state
+        )
+
+        order.account.balance += delta
+        reserve_delta = Balance({
+            order.account.exchange_config.reserve_asset:
+            -1 * delta.get(order.account.exchange_config.reserve_asset),
+        })
+        self.account_generator.reserve.balance += reserve_delta
+
+        next_buckets = deepcopy(prev_state["mento_buckets"])
+        next_buckets[order.config.exchange] = next_bucket
+        return next_buckets

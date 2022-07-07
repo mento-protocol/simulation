@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TypedDict, Union
 from enum import Enum
 
+from model.entities.account import Account
+
 
 class SerializableEnum(Enum):
     def __str__(self):
@@ -84,14 +86,3 @@ class OracleType(Enum):
 class Exchange(SerializableEnum):
     MENTO = 'mento'
     GENERAL_MARKET = 'general_market'
-
-# pylint:disable = too-few-public-methods
-
-
-class Order():
-    def __init__(self, asset, sell_amount, buy_amount, sell_reserve_asset, exchange):
-        self.asset: Currency = asset
-        self.sell_amount: float = sell_amount
-        self.buy_amount: float = buy_amount
-        self.sell_reserve_asset: bool = sell_reserve_asset
-        self.exchange: Exchange = exchange
