@@ -1,6 +1,9 @@
+"""
+Ensure the top level module is in sys.path
+"""
 import sys
 import os
 
-module_path = os.path.abspath(os.path.join(os.pardir, os.pardir))
-if module_path not in sys.path:
-    sys.path.append(module_path)
+MODULE_PATH = os.path.abspath(os.path.join(os.pardir, os.pardir))
+if MODULE_PATH not in sys.path:
+    sys.path.append(MODULE_PATH)

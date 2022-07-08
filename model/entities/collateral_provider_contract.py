@@ -23,7 +23,7 @@ class CollateralProviderContract:
     """
     CollateralProvider - manage state for a two-bucket position with LP tokens
     """
-    exchange: MentoExchange
+    mento_exchange: MentoExchange
     pair: Pair
     cp_token: Token = Token.CP
 
@@ -32,7 +32,7 @@ class CollateralProviderContract:
 
     def __init__(self, exchange: MentoExchange, config: MentoExchangeConfig):
         self.pair = Pair(config.reserve_asset, config.stable)
-        self.exchange = exchange
+        self.mento_exchange = exchange
 
     @property
     def stable_asset(self) -> Stable:
@@ -80,6 +80,15 @@ class CollateralProviderContract:
             })
 
             return (next_state, account_delta)
+
+    def exchange(
+        self,
+        state: StateVariables,
+        _amount: float,
+        _sell_reserve_asset: bool
+    ) -> Tuple[CollateralProviderState, float, float]:
+        with self.set_state(state):
+            pass
 
     def withdraw(
         self,
@@ -190,7 +199,7 @@ class CollateralProviderContract:
         """
         self.__global_state__ = state
         self.__state__ = state.get('collateral_provider', {}).get(
-            self.exchange,
+            self.mento_exchange,
             CollateralProviderState(
                 stable_bucket=0,
                 reserve_asset_bucket=0,

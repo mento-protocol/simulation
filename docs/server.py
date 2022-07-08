@@ -1,3 +1,7 @@
+"""
+Docs server
+"""
+# pylint: disable=bare-except
 from flask import Flask, send_from_directory, request
 
 

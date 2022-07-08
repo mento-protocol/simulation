@@ -7,9 +7,11 @@ python replication to debug the mento notebook
 # import setup
 import sys
 import copy
-from model import constants # import needed for initialization to avoid circular import later
-from experiments import default_experiment
 from pprint import pprint
+
+# import needed for initialization to avoid circular import later
+from model import constants # pylint: disable=unused-import
+from experiments import default_experiment
 from experiments.run import run
 sys.path.append("../..")
 sys.path.append("../../..")

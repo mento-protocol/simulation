@@ -4,7 +4,7 @@ jupyter & IPython setup
 import sys
 import pandas as pd
 from IPython import get_ipython
-
+# pylint: disable=invalid-name
 
 ipython = get_ipython()
 

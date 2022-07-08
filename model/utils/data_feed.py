@@ -58,11 +58,11 @@ class DataFeed:
             _, file_extension = os.path.splitext(data_file_name)
             raise NotImplementedError(f"File extension {file_extension} not supported")
 
-        historical_log_returns = self.calculate_log_returns(historical_prices)
+        historical_log_returns = calculate_log_returns(historical_prices)
         return historical_log_returns
 
-    def calculate_log_returns(self, data_frame):
-        """
-        calculates log returns out of a data frame with price time series in its columns
-        """
-        return data_frame.apply(lambda column: np.log((column/column.shift(1)).dropna()))
+def calculate_log_returns(data_frame):
+    """
+    calculates log returns out of a data frame with price time series in its columns
+    """
+    return data_frame.apply(lambda column: np.log((column/column.shift(1)).dropna()))
