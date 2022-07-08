@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [scripts]
-linter = "flake8 --show-source ."
+test = "pytest"
 format = "autopep8 -ivr ."
 todos = "bash -c 'grep 'TODO' -rni model/* | sed -e '$!s/$/\\/' > TODOS.md '"
 
