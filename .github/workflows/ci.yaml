@@ -31,7 +31,7 @@ jobs:
           pipenv install --deploy --dev
       - name: Run test suite
         run: |
-          pytest
+          pipenv run pytest
       - name: Run linter
         run: |
-          pylint **/*.py
+          pipenv run pylint **/*.py
