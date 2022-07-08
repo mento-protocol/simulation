@@ -47,7 +47,7 @@ class Pair(NamedTuple):
     def inverse(self) -> Pair:
         return Pair(self.quote, self.base)
 
-    def get_rate(self, state: StateVariables) -> float:
+    def get_rate(self, state: StateVariables) -> Rate:
         """
         Get the market rate for any pair as long as there's a path
         of other pairs with prices in market_price

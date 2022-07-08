@@ -1,6 +1,12 @@
+"""
+Test that executes all notebooks as a sanity check
+"""
+
 import os
+import pytest
 
 
+@pytest.mark.slow
 def test_notebooks():
     """Test all Jupyter Notebooks
     Test that the notebooks run to completion

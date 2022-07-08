@@ -83,8 +83,8 @@ class OracleType(Enum):
     SINGLE_SOURCE = 'single_source'
 
 class CollateralProviderState(TypedDict):
-    stable_basket: float
-    reserve_asset_basket: float
+    stable_bucket: float
+    reserve_asset_bucket: float
     minted_cp_tokens: float
 
 CollateralProviderStates = Dict[MentoExchange, CollateralProviderState]

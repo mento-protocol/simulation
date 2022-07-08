@@ -12,8 +12,7 @@ from radcad import Simulation, Experiment, Backend
 
 from experiments.simulation_configuration import TIMESTEPS, MONTE_CARLO_RUNS
 from model.utils.engine import Engine
-
-from model import model
+from model.model import model
 
 # Create Model Simulation
 simulation = Simulation(

@@ -9,7 +9,7 @@ from typing import Dict, TypedDict
 
 
 from model.types.base import (
-    CollateralProvierStates,
+    CollateralProviderStates,
     CryptoAsset,
     Fiat,
     MentoBuckets,

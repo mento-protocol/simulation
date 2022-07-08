@@ -41,6 +41,7 @@ flake8 = "*"
 autopep8 = "*"
 pre-commit = "*"
 pylint = "*"
+pylint-ignore = "*"
 
 [requires]
 python_version = "3.8"
