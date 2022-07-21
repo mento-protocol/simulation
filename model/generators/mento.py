@@ -9,7 +9,8 @@ import numpy as np
 
 from model.constants import blocktime_seconds
 from model.entities.balance import Balance
-from model.types.base import MentoBuckets, MentoExchange, Stable
+from model.entities.collateral_provider_contract import CollateralProviderContract
+from model.types.base import CollateralProviderState, MentoBuckets, MentoExchange, Stable
 from model.types.pair import Pair
 from model.types.configs import MentoExchangeConfig
 from model.utils.generator import Generator, state_update_blocks
@@ -165,9 +166,39 @@ class MentoExchangeGenerator(Generator):
             reserve_asset=prev_bucket['reserve_asset'] + delta_reserve_asset
         )
 
+        delta_cp_reserve_asset = 0
+        delta_cp_stable = 0
+
+        with CollateralProviderContract(
+            exchange=exchange, 
+            config=self.configs[exchange]
+        ).set_state(prev_state) as cp_contract:
+            if sell_reserve_asset:
+                delta_cp_stable = -1 * min(buy_amount, cp_contract.stable_bucket)
+                delta_cp_reserve_asset = -1 * (delta_cp_stable / buy_amount) * sell_amount
+            else:
+                delta_cp_reserve_asset = -1 * min(buy_amount, cp_contract.reserve_asset)
+                delta_cp_stable = -1 * (delta_cp_reserve_asset / buy_amount) * sell_amount
+            
+            cp_contract.rebalance(delta_cp_reserve_asset, delta_cp_stable)
+            next_cp_state = CollateralProviderState(
+                stable_bucket=cp_contract.stable_bucket + delta_cp_stable
+                reserve_asset_bucket=cp_contract.reserve_asset_bucket= + delta_cp_reserve_asset
+            )
+
+
+        reserve_delta = Balance({
+            config.reserve_asset: -1 * (delta_reserve_asset - delta_cp_reserve_asset),
+            config.stable: -1 * (delta_stable - delta_cp_stable)
+        })
+
         delta = Balance({
             config.reserve_asset: -1 * delta_reserve_asset,
             config.stable: -1 * delta_stable
         })
 
-        return (next_bucket, delta)
+        return (
+            next_bucket, 
+            delta,
+            next_cp_state
+            )

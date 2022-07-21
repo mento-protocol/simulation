@@ -24,6 +24,8 @@ class CollateralProviderContract:
     CollateralProvider - manage state for a two-bucket position with LP tokens
     """
     mento_exchange: MentoExchange
+    reserve_asset: CryptoAsset
+    stable: Stable
     pair: Pair
     cp_token: Token = Token.CP
 
@@ -31,16 +33,9 @@ class CollateralProviderContract:
     __global_state__: StateVariables
 
     def __init__(self, exchange: MentoExchange, config: MentoExchangeConfig):
-        self.pair = Pair(config.reserve_asset, config.stable)
+        self.stable = config.stable
+        self.reserve_asset = config.reserve_asset
         self.mento_exchange = exchange
-
-    @property
-    def stable_asset(self) -> Stable:
-        return self.pair.quote
-
-    @property
-    def reserve_asset(self) -> CryptoAsset:
-        return self.pair.base
 
     def deposit(
         self,
@@ -74,7 +69,7 @@ class CollateralProviderContract:
             )
 
             account_delta = Balance({
-                self.stable_asset: -1 * stable_asset_to_deposit,
+                self.stable: -1 * stable_asset_to_deposit,
                 self.reserve_asset: -1 * reserve_asset_to_deposit,
                 self.cp_token: cp_tokens_to_mint
             })
@@ -125,12 +120,12 @@ class CollateralProviderContract:
             )
 
             account_delta = Balance({
-                self.stable_asset: stable_assets_to_withdraw,
+                self.stable: stable_assets_to_withdraw,
                 self.reserve_asset: reserve_assets_to_withdraw,
                 self.cp_token: -1 * cp_tokens_to_withdraw
             })
             return (next_state, account_delta)
-
+    
     @with_state
     def cp_tokens_to_mint(
         self,
@@ -139,6 +134,10 @@ class CollateralProviderContract:
         if self.minted_cp_tokens == 0:
             return total_to_deposit_in_reserve_asset
         return self.cp_tokens_per_reserve_asset * total_to_deposit_in_reserve_asset
+
+    @functools.cached_property
+    def pair(self) -> Pair:
+        return Pair(self.reserve_asset, self.stable)
 
     @property
     @with_state
@@ -205,6 +204,6 @@ class CollateralProviderContract:
                 reserve_asset_bucket=0,
                 minted_cp_tokens=0
             ))
-        yield
+        yield self
         self.__global_state__ = None
         self.__state__ = None
