@@ -47,6 +47,22 @@ class Pair(NamedTuple):
     def inverse(self) -> Pair:
         return Pair(self.quote, self.base)
 
+    @classmethod
+    def parse_from_string(cls, string):
+        """
+        Creating Pair from string 'baseccy_quoteccy'
+        """
+        base, quote = string.split('_')
+        assert base not in Fiat, f'Wrong quote convention used for {string}'
+        assert quote in Fiat, f'Wrong quote convention used for {string}'
+        if base in CryptoAsset:
+            base = CryptoAsset(base)
+        elif base in Stable:
+            base = Stable(base)
+        quote = Fiat(quote)
+
+        return Pair(base, quote)
+
     def get_rate(self, state: StateVariables) -> float:
         """
         Get the market rate for any pair as long as there's a path
