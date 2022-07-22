@@ -2,7 +2,7 @@
 
 A modular dynamical-systems model of the Mento2.0 design, based on the open-source Python library [radCAD](https://github.com/CADLabs/radCAD), an extension to [cadCAD](https://cadcad.org).
 
-* Latest model release version: [Private fork of Ethereum Economic Model / v0.0.0](https://github.com/celo-org/mento2-model/releases/tag/v0.0.0)
+* Latest model release version: [Private fork of Ethereum Economic Model / v0.0.0](https://github.com/mento-protocol/simulation/releases/tag/v0.0.0)
 
 ## Table of Contents
 
@@ -91,7 +91,7 @@ The [Differential Model Specification](https://hackmd.io/@CADLabs/HyENPQ36u) dep
 
 ## Environment Setup
 
-1. Clone or download the Git repository: `git clone https://github.com/celo-org/mento2-model` or using GitHub Desktop
+1. Clone or download the Git repository: `git clone https://github.com/mento-protocol/simulation` or using GitHub Desktop
 2. Set up your development environment using one of the following two options:
 
 ### Option 1: Your usual python workflow
@@ -177,10 +177,10 @@ Since we borrow so heavily from previous work, we would like to thank:
 ## Contributors ✨
 
 ## License
-The code repository `celo-org/mento2-model` is licensed under the GNU General Public License v3.0.
+The code repository `mento-protocol/simulation` is licensed under the GNU General Public License v3.0.
 Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
 If you'd like to cite this code and/or research, we suggest the following format:
-> cLabs, Mento2 Model, (2021), GitHub repository, https://github.com/celo-org/mento2-model
+> cLabs, Mento2 Model, (2021), GitHub repository, https://github.com/mento-protocol/simulation
 
 ```latex
 
@@ -196,7 +196,7 @@ If you'd like to cite this code and/or research, we suggest the following format
 
 [comment]: <> (  journal = {GitHub repository},)
 
-[comment]: <> (  howpublished = {\url{https://github.com/celo-org/mento2-model}},)
+[comment]: <> (  howpublished = {\url{https://github.com/mento-protocol/simulation}},)
 
 [comment]: <> (  version = {v0.0.0})
 
