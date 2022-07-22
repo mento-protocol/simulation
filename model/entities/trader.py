@@ -4,12 +4,13 @@ Agents implement the Actor type.
 """
 # pylint: disable=too-few-public-methods
 from typing import TYPE_CHECKING
-from copy import deepcopy
 from uuid import UUID
 
 from model.generators.mento import MentoExchangeGenerator
 from model.entities import strategies
-from model.entities.account import Account, Balance
+from model.entities.account import Account
+from model.entities.balance import Balance
+from model.types.order import Order
 from model.types.pair import Pair
 from model.types.configs import MentoExchangeConfig, TraderConfig
 from model.utils.rng_provider import RNGProvider
@@ -27,6 +28,7 @@ class Trader(Account):
     exchange_config: MentoExchangeConfig
     mento: MentoExchangeGenerator
     rngp: RNGProvider
+    order: Order
 
     def __init__(
         self,
@@ -40,11 +42,10 @@ class Trader(Account):
         self.rngp = rngp
         self.mento = self.parent.container.get(MentoExchangeGenerator)
         self.config = config
-        self.exchange_config = self.mento.configs.get(self.config.exchange)
-
         strategy_class = getattr(strategies, config.trader_type.value)
         assert strategy_class is not None, f"{config.trader_type.value} is not a strategy"
         self.strategy = strategy_class(self)
+        self.order = None
 
     def execute(
         self,
@@ -54,34 +55,18 @@ class Trader(Account):
         """
         Execute the agent's state change
         """
-        order = self.strategy.return_optimal_trade(params, prev_state)
-        if order is None:
+        self.strategy.create_order(params, prev_state)
+        if self.order.sell_amount is None:
             return {
                 "mento_buckets": prev_state["mento_buckets"],
                 "floating_supply": prev_state["floating_supply"],
                 "reserve_balance": prev_state["reserve_balance"],
             }
 
-        sell_amount = order["sell_amount"]
-        sell_reserve_asset = order["sell_reserve_asset"]
-        self.rebalance_portfolio(sell_amount, sell_reserve_asset, prev_state)
+        self.rebalance_portfolio(self.order.sell_amount,
+                                 self.order.sell_reserve_asset, params, prev_state)
 
-        next_bucket, delta = self.mento.exchange(
-            self.config.exchange,
-            sell_amount,
-            sell_reserve_asset,
-            prev_state
-        )
-
-        self.balance += delta
-        reserve_delta = Balance({
-            self.exchange_config.reserve_asset:
-                -1 * delta.get(self.exchange_config.reserve_asset),
-        })
-        self.parent.reserve.balance += reserve_delta
-
-        next_buckets = deepcopy(prev_state["mento_buckets"])
-        next_buckets[self.config.exchange] = next_bucket
+        next_buckets = self.mento.process_order(self.order, prev_state)
 
         return {
             "mento_buckets": next_buckets,
@@ -89,16 +74,16 @@ class Trader(Account):
             "reserve_balance": self.parent.reserve.balance,
         }
 
-    def rebalance_portfolio(self, target_amount, target_is_reserve_asset, prev_state):
+    def rebalance_portfolio(self, target_amount, target_is_reserve_asset, params, prev_state):
         """
         Sometimes the optimal trade might require selling more of an
         asset than the trader has in his portfolio, but the total
         value of the portfolio would cover it therefore they can
         rebalance and execute the trade.
         """
-        reserve_asset = self.exchange_config.reserve_asset
-        stable = self.exchange_config.stable
-        reference_fiat = self.exchange_config.reference_fiat
+        reserve_asset = params['mento_exchanges_config'][self.config.exchange].reserve_asset
+        stable = params['mento_exchanges_config'][self.config.exchange].stable
+        reference_fiat = params['mento_exchanges_config'][self.config.exchange].reference_fiat
 
         # TODO: Should these be quoted in the specific
         # fiat of the stable?

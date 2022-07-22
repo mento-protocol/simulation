@@ -2,13 +2,30 @@
 Various Python types used in the model
 """
 from __future__ import annotations
+from enum import Enum, EnumMeta
 from typing import TypedDict, Union
-from enum import Enum
+
+from model.entities.account import Account
 
 
 class SerializableEnum(Enum):
     def __str__(self):
         return self.value
+
+# pylint: disable=no-value-for-parameter
+
+
+class MetaEnum(EnumMeta):
+    def __contains__(cls, item):
+        try:
+            cls(item)
+        except ValueError:
+            return False
+        return True
+
+
+class ReflectiveSerializableEnum(SerializableEnum, metaclass=MetaEnum):
+    pass
 
 
 class TraderType(Enum):
@@ -20,7 +37,7 @@ class TraderType(Enum):
     MAX_TRADER = "SellMax"
 
 
-class Stable(SerializableEnum):
+class Stable(ReflectiveSerializableEnum):
     """
     Celo Stable assets
     """
@@ -29,14 +46,14 @@ class Stable(SerializableEnum):
     CEUR = "ceur"
 
 
-class CryptoAsset(SerializableEnum):
+class CryptoAsset(ReflectiveSerializableEnum):
     CELO = "celo"
     ETH = "eth"
     BTC = "btc"
     DAI = "dai"
 
 
-class Fiat(SerializableEnum):
+class Fiat(ReflectiveSerializableEnum):
     USD = "usd"
     EUR = "eur"
     BRL = "brl"
@@ -79,3 +96,8 @@ class AggregationMethod(Enum):
 
 class OracleType(Enum):
     SINGLE_SOURCE = 'single_source'
+
+
+class Exchange(SerializableEnum):
+    MENTO = 'mento'
+    GENERAL_MARKET = 'general_market'

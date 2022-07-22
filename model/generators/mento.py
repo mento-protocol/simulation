@@ -4,16 +4,24 @@ Mento generator
 Handles one or more mento instances
 """
 
+from copy import deepcopy
+from functools import cached_property
 from typing import Any, Dict, Set
 import numpy as np
 
 from model.constants import blocktime_seconds
 from model.entities.balance import Balance
+from model.types.order import Order
+from model.utils.generator_container import GeneratorContainer
 from model.types.base import MentoBuckets, MentoExchange, Stable
 from model.types.pair import Pair
 from model.types.configs import MentoExchangeConfig
 from model.utils.generator import Generator, state_update_blocks
 from model.utils import update_from_signal
+
+# if TYPE_CHECKING:
+#    from model.entities.balance import Balance
+#    from model.generators.accounts import AccountGenerator
 
 # raise numpy warnings as errors
 np.seterr(all='raise')
@@ -31,17 +39,26 @@ class MentoExchangeGenerator(Generator):
     """
     configs: Dict[MentoExchange, MentoExchangeConfig]
     active_exchanges: Set[MentoExchange]
+    container: GeneratorContainer
 
-    def __init__(self, configs: Dict[Stable, MentoExchangeConfig], active_exchanges: Set[Stable]):
+    def __init__(self, configs: Dict[Stable, MentoExchangeConfig],
+                 active_exchanges: Set[Stable], container: GeneratorContainer):
         self.configs = configs
         self.active_exchanges = active_exchanges
+        self.container = container
 
     @classmethod
-    def from_parameters(cls, params, _initial_state, _container):
+    def from_parameters(cls, params, _initial_state, container):
         return cls(
             params['mento_exchanges_config'],
-            set(params['mento_exchanges_active'])
+            set(params['mento_exchanges_active']),
+            container
         )
+
+    @cached_property
+    def account_generator(self):
+        from model.generators.accounts import AccountGenerator
+        return self.container.get(AccountGenerator)
 
     @state_update_blocks('bucket_update')
     def bucket_update(self):
@@ -146,6 +163,7 @@ class MentoExchangeGenerator(Generator):
         """
         Update the simulation state with a trade between the reserve currency and stable
         """
+
         config = self.configs.get(exchange)
         assert config is not None
 
@@ -171,3 +189,27 @@ class MentoExchangeGenerator(Generator):
         })
 
         return (next_bucket, delta)
+
+    def process_order(self, order: Order, prev_state):
+        """
+        wrapper function responsible for performing exchange and balancing accounts
+        """
+        next_bucket, delta = self.exchange(
+            order.exchange,
+            order.sell_amount,
+            order.sell_reserve_asset,
+            prev_state
+        )
+        config = self.configs.get(order.exchange)
+        account = self.account_generator.accounts_by_id.get(order.account_id)
+        account.balance += delta
+
+        reserve_delta = Balance({
+            config.reserve_asset:
+            -1 * delta.get(config.reserve_asset),
+        })
+        self.account_generator.reserve.balance += reserve_delta
+
+        next_buckets = deepcopy(prev_state["mento_buckets"])
+        next_buckets[order.exchange] = next_bucket
+        return next_buckets

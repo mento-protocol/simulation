@@ -213,16 +213,18 @@ parameters = InitParameters(
     ],
     impacted_assets=[[
         Pair(CryptoAsset.CELO, Fiat.USD),
+        Pair(CryptoAsset.CELO, Fiat.EUR),
+        Pair(CryptoAsset.CELO, Fiat.BRL),
         Pair(Stable.CUSD, Fiat.USD),
         Pair(Stable.CEUR, Fiat.EUR),
         Pair(Stable.CREAL, Fiat.BRL),
-        Pair(CryptoAsset.BTC, Fiat.USD),
-        Pair(CryptoAsset.ETH, Fiat.USD),
-        Pair(CryptoAsset.DAI, Fiat.USD),
+
     ]],
 
     variance_market_price=[{
         Pair(CryptoAsset.CELO, Fiat.USD): 1,
+        Pair(CryptoAsset.CELO, Fiat.EUR): 1,
+        Pair(CryptoAsset.CELO, Fiat.BRL): 1,
         Pair(Stable.CUSD, Fiat.USD): 0.01,
         Pair(Stable.CEUR, Fiat.EUR): 0.01,
         Pair(Stable.CREAL, Fiat.BRL): 0.01,
@@ -241,10 +243,16 @@ parameters = InitParameters(
             ),
             TraderConfig(
                 trader_type=TraderType.ARBITRAGE_TRADER,
-                count=2,
+                count=1,
                 balance=Balance({CryptoAsset.CELO: 500000, Stable.CEUR: 1000000}),
                 exchange=MentoExchange.CEUR_CELO
             ),
+            # TraderConfig(
+            #     trader_type=TraderType.RANDOM_TRADER,
+            #     count=1,
+            #     balance=Balance({CryptoAsset.CELO: 500000, Stable.CEUR: 1000000}),
+            #     exchange=MentoExchange.CEUR_CELO
+            # ),
         ]
     ],
 

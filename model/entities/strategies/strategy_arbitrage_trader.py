@@ -1,17 +1,11 @@
 """
 Strategy: Arbitrage Trader
 """
-from enum import Enum
 import numpy as np
 
 from model.types.base import MentoBuckets
 from .trader_strategy import TraderStrategy
-
-
-class TradingRegime(Enum):
-    SELL_STABLE = "SELL_STABLE"
-    SELL_RESERVE_ASSET = "SELL_RESERVE_ASSET"
-    PASS = "PASS"
+from .trader_strategy import TradingRegime
 
 
 # pylint: disable=using-constant-test
@@ -28,9 +22,9 @@ class ArbitrageTrading(TraderStrategy):
 
     def sell_reserve_asset(self, _params, prev_state):
         # Arb trade will sell CELO if  CELO/USD > CELO/cUSD
-        return self.trading_regime(prev_state) == TradingRegime.SELL_RESERVE_ASSET
+        return self.determine_trading_regime(prev_state) == TradingRegime.SELL_RESERVE_ASSET
 
-    def trading_regime(self, prev_state) -> TradingRegime:
+    def determine_trading_regime(self, prev_state) -> TradingRegime:
         """
         Indicates how the trader will act depending on the relation of mento price
         and market price
@@ -63,7 +57,7 @@ class ArbitrageTrading(TraderStrategy):
         mento_buckets = self.mento_buckets(prev_state)
         spread = self.exchange_config.spread
 
-        if self.trading_regime(prev_state) == TradingRegime.SELL_STABLE:
+        if self.trading_regime == TradingRegime.SELL_STABLE:
             self.expressions["profit"] = (
                 -1 * self.variables["sell_amount"]
                 * mento_buckets['reserve_asset']
@@ -72,7 +66,7 @@ class ArbitrageTrading(TraderStrategy):
                 + (1 - spread) * self.variables["sell_amount"]
                 + market_price * self.variables["sell_amount"]
             )
-        elif self.trading_regime(prev_state) == TradingRegime.SELL_RESERVE_ASSET:
+        elif self.trading_regime == TradingRegime.SELL_RESERVE_ASSET:
             self.expressions["profit"] = (
                 -self.variables["sell_amount"]
                 * mento_buckets['stable']
@@ -83,7 +77,7 @@ class ArbitrageTrading(TraderStrategy):
             )
 
     def trader_passes_step(self, _params, prev_state):
-        return (self.trading_regime(prev_state) == "PASS") or \
+        return (self.determine_trading_regime(prev_state) == "PASS") or \
                (prev_state["timestep"] % self.acting_frequency != 0)
 
     # # pylint: disable=attribute-defined-outside-init
@@ -94,23 +88,21 @@ class ArbitrageTrading(TraderStrategy):
         market_price = self.market_price(prev_state)
         mento_buckets = self.mento_buckets(prev_state)
         spread = self.exchange_config.spread
-        mento_price = mento_buckets['stable'] / mento_buckets['reserve_asset']
 
-        if market_price * (1 - spread) > mento_price:
+        if self.trading_regime == TradingRegime.SELL_STABLE:
             self.sell_order_stable(
                 mento_buckets,
                 market_price,
                 spread
             )
-        elif market_price / (1 - spread) < mento_price:
+        elif self.trading_regime == TradingRegime.SELL_RESERVE_ASSET:
             self.sell_order_reserve_asset(
                 mento_buckets,
                 market_price,
                 spread
             )
-        else:
-            self.order = {"sell_amount": None}
-        self.sell_amount = self.order["sell_amount"]
+
+        # self.sell_amount = self.order["sell_amount"]
 
     def sell_order_stable(self, buckets: MentoBuckets, market_price: float, spread: float):
         """
@@ -127,13 +119,9 @@ class ArbitrageTrading(TraderStrategy):
             spread
         )
 
-        self.order = {
-            "sell_amount": min(
-                sell_amount,
-                max_budget_stable,
-            ),
-            "sell_reserve_asset": False,
-        }
+        self.order.sell_amount = min(sell_amount,
+                                     max_budget_stable,)
+        self.order.sell_reserve_asset = False
 
     def sell_order_reserve_asset(
             self,
@@ -154,15 +142,12 @@ class ArbitrageTrading(TraderStrategy):
             spread
         )
 
-        self.order = {
-            "sell_amount": min(
-                sell_amount,
-                max_budget_celo,
-            ),
-            "sell_reserve_asset": True,
-        }
+        self.order.sell_amount = min(sell_amount,
+                                     max_budget_celo,)
+        self.order.sell_reserve_asset = True
 
     # pylint: disable=no-self-use
+
     def optimal_sell_amount(self, bucket_sell, bucket_buy, price_buy_sell, spread):
         """
         bucket_sell: bucket of asset that is sold

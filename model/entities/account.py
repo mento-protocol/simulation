@@ -5,9 +5,10 @@ which holds balances.
 # pylint: disable=too-few-public-methods
 from typing import TYPE_CHECKING
 from uuid import UUID
-from model.entities.balance import Balance
 if TYPE_CHECKING:
+    from model.entities.balance import Balance
     from model.generators.accounts import AccountGenerator
+
 
 class Account():
     """
@@ -16,14 +17,14 @@ class Account():
     parent: "AccountGenerator"
     account_id: UUID
     account_name: str
-    balance: Balance
+    balance: "Balance"
 
     def __init__(
         self,
         parent: "AccountGenerator",
         account_id: UUID,
         account_name: str,
-        balance: Balance
+        balance: "Balance"
     ):
         self.parent = parent
         self.account_id = account_id
