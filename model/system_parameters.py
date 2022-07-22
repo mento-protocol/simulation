@@ -213,16 +213,18 @@ parameters = InitParameters(
     ],
     impacted_assets=[[
         Pair(CryptoAsset.CELO, Fiat.USD),
+        Pair(CryptoAsset.CELO, Fiat.EUR),
+        Pair(CryptoAsset.CELO, Fiat.BRL),
         Pair(Stable.CUSD, Fiat.USD),
         Pair(Stable.CEUR, Fiat.EUR),
         Pair(Stable.CREAL, Fiat.BRL),
-        Pair(CryptoAsset.BTC, Fiat.USD),
-        Pair(CryptoAsset.ETH, Fiat.USD),
-        Pair(CryptoAsset.DAI, Fiat.USD),
+
     ]],
 
     variance_market_price=[{
         Pair(CryptoAsset.CELO, Fiat.USD): 1,
+        Pair(CryptoAsset.CELO, Fiat.EUR): 1,
+        Pair(CryptoAsset.CELO, Fiat.BRL): 1,
         Pair(Stable.CUSD, Fiat.USD): 0.01,
         Pair(Stable.CEUR, Fiat.EUR): 0.01,
         Pair(Stable.CREAL, Fiat.BRL): 0.01,
