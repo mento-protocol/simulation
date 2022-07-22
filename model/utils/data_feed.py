@@ -11,6 +11,7 @@ from experiments.simulation_configuration import DATA_SOURCE
 # pylint: disable = unused-import
 # pylint: disable = redefined-outer-name
 import data.mock_data  # this is necessary to create mock data if not existent
+from model.types.pair import Pair
 
 DATA_FOLDER = Path(__file__, "../../../data/").resolve()
 MOCK_DATA_FILE_NAME = "mock_logreturns.prq"
@@ -36,7 +37,8 @@ class DataFeed:
 
         self.data = np.array(self.historical_data)
         self.length = len(self.historical_data)
-        self.assets = list(self.historical_data.columns)
+        self.assets = [Pair.parse_from_string(name)
+                       for name in self.historical_data.columns]
 
     def load_mock_data(self, data_file_name):
         """
@@ -59,8 +61,10 @@ class DataFeed:
             raise NotImplementedError(f"File extension {file_extension} not supported")
 
         historical_log_returns = self.calculate_log_returns(historical_prices)
+        print(historical_log_returns)
         return historical_log_returns
 
+    # pylint: disable =no-self-use
     def calculate_log_returns(self, data_frame):
         """
         calculates log returns out of a data frame with price time series in its columns
