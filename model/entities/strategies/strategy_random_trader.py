@@ -1,27 +1,30 @@
 """
 Strategy: Random Trader
 """
+from typing import List
 from cvxpy import Variable
 import numpy as np
 
 from experiments import simulation_configuration
 
-from .trader_strategy import TraderStrategy
+from model.entities.strategies.trader_strategy import TraderStrategy, TradingRegime
+from model.types.order import Order
+
 
 class RandomTrading(TraderStrategy):
     """
     Random Trading
     """
+    order_list: List[Order]
 
     def __init__(self, parent, acting_frequency=1):
         # The following is used to define the strategy and needs to be provided in subclass
         super().__init__(parent, acting_frequency)
-        self.generate_sell_amounts()
-        self.sell_amount = None
         self.rng = parent.rngp.get_rng("RandomTrader", self.parent.account_id)
+        self.order_list = self.generate_sell_amounts()
 
     def sell_reserve_asset(self, _params, prev_state):
-        return self.orders[prev_state["timestep"]]["sell_reserve_asset"]
+        return self.order_list["sell_reserve_asset"][prev_state["timestep"]]
 
     def define_variables(self):
         self.variables["sell_amount"] = Variable(pos=True)
@@ -52,7 +55,7 @@ class RandomTrading(TraderStrategy):
                 self.variables["sell_amount"]
                 <= min(
                     max_budget_reserve_asset,
-                    self.orders[prev_state["timestep"]]["sell_amount"]
+                    self.order_list["sell_amount"][prev_state["timestep"]]
                 )
             )
         else:
@@ -60,31 +63,44 @@ class RandomTrading(TraderStrategy):
                 self.variables["sell_amount"]
                 <= min(
                     max_budget_stable,
-                    self.orders[prev_state["timestep"]]["sell_amount"]
+                    self.order_list["sell_amount"][prev_state["timestep"]]
                 )
             )
 
+    def determine_trading_regime(self, prev_state) -> TradingRegime:
+        """
+        Indicates how the trader will act depending on the relation of mento price
+        and market price
+        """
+        sell_reserve_asset = self.order_list[
+            'sell_reserve_asset'][prev_state['timestep']]
+        regime = TradingRegime.PASS
+        if sell_reserve_asset:
+            regime = TradingRegime.SELL_RESERVE_ASSET
+        elif not sell_reserve_asset:
+            regime = TradingRegime.SELL_STABLE
+        return regime
+
     def generate_sell_amounts(
         self,
-        blocks_per_timestep=simulation_configuration.BLOCKS_PER_TIMESTEP,
-        timesteps=simulation_configuration.TIMESTEPS,
     ):
         """
         This function generates lognormal returns
         """
-        # timesteps_per_year = constants.blocks_per_year // blocks_per_timestep
-        sample_size = timesteps * blocks_per_timestep + 1
-        # TODO parametrise random params incl. seed
-        sell_gold = self.rng.binomial(1, 0.5, sample_size)
-        orders = np.vstack(
-            [sell_gold, np.abs(self.rng.normal(100, 5, size=sample_size))]
-        )
-        self.orders = np.core.records.fromarrays(
-            orders, names=["sell_reserve_asset", "sell_amount"]
-        )
+        sample_size = simulation_configuration.TOTAL_BLOCKS + 1
+
+        sell_reserve_asset = (self.rng.binomial(1, 0.5, sample_size) == 1)
+        sell_amount = np.abs(self.rng.normal(1000, 0, size=sample_size))
+
+        orders = {"sell_reserve_asset": sell_reserve_asset,
+                  "sell_amount": sell_amount}
+        return orders
 
     def calculate(self, _params, prev_state):
         """
         Calculates optimal trade if analytical solution is available
         """
-        self.sell_amount = self.orders[prev_state["timestep"]]["sell_amount"]
+        sell_amounts = self.order_list["sell_amount"]
+        order_directions = self.order_list["sell_reserve_asset"]
+        self.order.sell_amount = sell_amounts[prev_state["timestep"]]
+        self.order.sell_reserve_asset = order_directions[prev_state["timestep"]]

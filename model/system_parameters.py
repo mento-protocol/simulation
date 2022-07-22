@@ -243,10 +243,16 @@ parameters = InitParameters(
             ),
             TraderConfig(
                 trader_type=TraderType.ARBITRAGE_TRADER,
-                count=2,
+                count=1,
                 balance=Balance({CryptoAsset.CELO: 500000, Stable.CEUR: 1000000}),
                 exchange=MentoExchange.CEUR_CELO
             ),
+            # TraderConfig(
+            #     trader_type=TraderType.RANDOM_TRADER,
+            #     count=1,
+            #     balance=Balance({CryptoAsset.CELO: 500000, Stable.CEUR: 1000000}),
+            #     exchange=MentoExchange.CEUR_CELO
+            # ),
         ]
     ],
 

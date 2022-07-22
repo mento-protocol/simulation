@@ -8,6 +8,7 @@
   inside of solve() but the
  objective_function and the constraints should still be specified for completeness!
 """
+from enum import Enum
 from typing import TYPE_CHECKING
 import logging
 from cvxpy import Maximize, Minimize, Problem, Variable
@@ -21,6 +22,12 @@ if TYPE_CHECKING:
     from model.entities.trader import Trader
 
 
+class TradingRegime(Enum):
+    SELL_STABLE = "SELL_STABLE"
+    SELL_RESERVE_ASSET = "SELL_RESERVE_ASSET"
+    PASS = "PASS"
+
+
 class TraderStrategy:
     """
     Base trader strategy class to solve a convex optimisation problem.
@@ -29,6 +36,7 @@ class TraderStrategy:
     """
     parent: "Trader"
     exchange_config: MentoExchangeConfig
+    trading_regime: TradingRegime
     order: Order
 
     def __init__(self, parent: "Trader", acting_frequency):
@@ -43,13 +51,13 @@ class TraderStrategy:
         self.objective_function = None
         self.optimization_direction = None
         self.constraints = []
-        # TODO order vs sell_amount ???
-        self.order = Order(account=self.parent,
-                           asset=None,
+        self.trading_regime = None
+        self.order = Order(account_id=self.parent.account_id,
+                           pair=None,
                            sell_amount=None,
                            buy_amount=None,
                            sell_reserve_asset=None,
-                           exchange=None)
+                           exchange=self.parent.config.exchange)
 
     @property
     def reference_fiat(self):
@@ -84,6 +92,12 @@ class TraderStrategy:
         that are used in the optimization
         """
         raise NotImplementedError("Subclasses must implement define_expressions()")
+
+    def determine_trading_regime(self, _prev_state) -> TradingRegime:
+        """
+        Indicates how the trader will act depending on the state of the market
+        """
+        raise NotImplementedError("Subclasses must implement trading_regime()")
 
     def define_constraints(self, params, prev_state):
         """
@@ -173,15 +187,18 @@ class TraderStrategy:
         return sell_amount_adjusted
 
     def trader_passes_step(self, _params, prev_state):
+        """
+        evaluates whether trader passes current step due to acting frequency
+        """
         return prev_state["timestep"] % self.acting_frequency != 0
 
     def create_order(self, params, prev_state):
         """
         Returns the optimal action to be executed by actor
         """
-        # if self.trader_passes_step(params, prev_state):
-        #    # Actor not acting this timestep
-        if not self.trader_passes_step(params, prev_state):
+        self.determine_trading_regime(prev_state)
+        if (not self.trader_passes_step(params, prev_state)
+                and self.trading_regime != TradingRegime.PASS):
             self.optimize(params=params, prev_state=prev_state)
             self.order.sell_amount = (
                 self.variables["sell_amount"].value if self.variables else self.order.sell_amount
@@ -190,15 +207,16 @@ class TraderStrategy:
             if self.order.sell_amount is None or self.order.sell_amount == 0:
                 self.order.sell_amount = None
             else:
-                self.order.asset = self.sell_reserve_asset(params, prev_state)
+                #self.order.pair = self.sell_reserve_asset(params, prev_state)
                 self.order.sell_amount = self.minimise_price_impact(
-                    self.order.sell_amount, self.order.asset, params)
+                    self.order.sell_amount, self.order.pair, params)
                 self.order.buy_amount = self.mento.get_buy_amount(
                     exchange=self.parent.config.exchange,
                     sell_amount=self.order.sell_amount,
                     sell_reserve_asset=self.order.sell_reserve_asset,
                     prev_state=prev_state,
                 )
+        self.parent.order = self.order
 
     def market_price(self, prev_state) -> float:
         # TODO: Do we need to quote in equivalent Fiat for Stable?

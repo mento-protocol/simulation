@@ -6,7 +6,7 @@ Handles one or more mento instances
 
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Dict, Set
+from typing import Any, Dict, Set
 import numpy as np
 
 from model.constants import blocktime_seconds
@@ -46,7 +46,6 @@ class MentoExchangeGenerator(Generator):
         self.configs = configs
         self.active_exchanges = active_exchanges
         self.container = container
-    
 
     @classmethod
     def from_parameters(cls, params, _initial_state, container):
@@ -55,7 +54,7 @@ class MentoExchangeGenerator(Generator):
             set(params['mento_exchanges_active']),
             container
         )
-    
+
     @cached_property
     def account_generator(self):
         from model.generators.accounts import AccountGenerator
@@ -164,6 +163,7 @@ class MentoExchangeGenerator(Generator):
         """
         Update the simulation state with a trade between the reserve currency and stable
         """
+
         config = self.configs.get(exchange)
         assert config is not None
 
@@ -191,17 +191,22 @@ class MentoExchangeGenerator(Generator):
         return (next_bucket, delta)
 
     def process_order(self, order: Order, prev_state):
+        """
+        wrapper function responsible for performing exchange and balancing accounts
+        """
         next_bucket, delta = self.exchange(
-            order.account.config.exchange,
+            order.exchange,
             order.sell_amount,
             order.sell_reserve_asset,
             prev_state
         )
+        config = self.configs.get(order.exchange)
+        account = self.account_generator.accounts_by_id.get(order.account_id)
+        account.balance += delta
 
-        order.account.balance += delta
         reserve_delta = Balance({
-            order.account.exchange_config.reserve_asset:
-            -1 * delta.get(order.account.exchange_config.reserve_asset),
+            config.reserve_asset:
+            -1 * delta.get(config.reserve_asset),
         })
         self.account_generator.reserve.balance += reserve_delta
 
