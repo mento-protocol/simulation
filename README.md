@@ -2,7 +2,7 @@
 
 A modular dynamical-systems model of the Mento2.0 design, based on the open-source Python library [radCAD](https://github.com/CADLabs/radCAD), an extension to [cadCAD](https://cadcad.org).
 
-* Latest model release version: [Private fork of Ethereum Economic Model / v0.0.0](https://github.com/celo-org/mento2-model/releases/tag/v0.0.0)
+* Latest model release version: [Private fork of Ethereum Economic Model / v0.0.0](https://github.com/mento-protocol/simulation/releases/tag/v0.0.0)
 
 ## Table of Contents
 
@@ -95,6 +95,7 @@ The [Differential Model Specification](https://hackmd.io/@CADLabs/HyENPQ36u) dep
 2. Pull data files via git-lfs: `git lfs pull`
 3. Set up your development environment using one of the following two options:
 
+
 ### Option 1: Your usual python workflow
 
 You can use your usual python workflow and install dependencies from the [Pipfile](Pipfile), for example using `virtualenv`
@@ -182,6 +183,7 @@ The code repository `mento-protocol/simulation` is licensed under the GNU Genera
 Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
 If you'd like to cite this code and/or research, we suggest the following format:
 > Mento Labs, Mento 2.0 Model, (2022), GitHub repository, https://github.com/mento-protocol/simulation
+
 
 ```latex
 
