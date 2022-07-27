@@ -4,12 +4,13 @@ Agents implement the Actor type.
 """
 # pylint: disable=too-few-public-methods
 from typing import TYPE_CHECKING
-from copy import deepcopy
+from copy import copy, deepcopy
 from uuid import UUID
 
 from model.generators.mento import MentoExchangeGenerator
 from model.entities import strategies
 from model.entities.account import Account, Balance
+from model.state_variables import StateVariables
 from model.types.pair import Pair
 from model.types.configs import MentoExchangeConfig, TraderConfig
 from model.utils.rng_provider import RNGProvider
@@ -49,45 +50,41 @@ class Trader(Account):
     def execute(
         self,
         params,
-        prev_state,
+        state: StateVariables,
     ):
         """
         Execute the agent's state change
         """
-        order = self.strategy.return_optimal_trade(params, prev_state)
+        order = self.strategy.return_optimal_trade(params, state)
         if order is None:
             return {
-                "mento_buckets": prev_state["mento_buckets"],
-                "floating_supply": prev_state["floating_supply"],
-                "reserve_balance": prev_state["reserve_balance"],
+                "mento_buckets": state["mento_buckets"],
+                "floating_supply": state["floating_supply"],
+                "reserve_balance": state["reserve_balance"],
+                "collateral_provider": state["collateral_provider"],
             }
 
         sell_amount = order["sell_amount"]
         sell_reserve_asset = order["sell_reserve_asset"]
-        self.rebalance_portfolio(sell_amount, sell_reserve_asset, prev_state)
+        self.rebalance_portfolio(sell_amount, sell_reserve_asset, state)
 
-        next_bucket, delta = self.mento.exchange(
+        account_delta, reserve_delta, state_mutation = self.mento.exchange(
             self.config.exchange,
             sell_amount,
             sell_reserve_asset,
-            prev_state
+            state
         )
 
-        self.balance += delta
-        reserve_delta = Balance({
-            self.exchange_config.reserve_asset:
-                -1 * delta.get(self.exchange_config.reserve_asset),
-        })
+        self.balance += account_delta
         self.parent.reserve.balance += reserve_delta
 
-        next_buckets = deepcopy(prev_state["mento_buckets"])
-        next_buckets[self.config.exchange] = next_bucket
+        state_mutation.add(
+            ["floating_supply"], self.parent.floating_supply
+        ).add(
+            ["reserve_balance"], self.parent.reserve.balance
+        )
 
-        return {
-            "mento_buckets": next_buckets,
-            "floating_supply": self.parent.floating_supply,
-            "reserve_balance": self.parent.reserve.balance,
-        }
+        return state_mutation.to_diff(state)
 
     def rebalance_portfolio(self, target_amount, target_is_reserve_asset, prev_state):
         """

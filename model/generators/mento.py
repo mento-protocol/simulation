@@ -4,17 +4,19 @@ Mento generator
 Handles one or more mento instances
 """
 
-from typing import Any, Dict, Set
+from typing import Any, Dict, Set, Tuple
 import numpy as np
 
 from model.constants import blocktime_seconds
 from model.entities.balance import Balance
 from model.entities.collateral_provider_contract import CollateralProviderContract
+from model.state_variables import StateVariables
 from model.types.base import CollateralProviderState, MentoBuckets, MentoExchange, Stable
 from model.types.pair import Pair
 from model.types.configs import MentoExchangeConfig
 from model.utils.generator import Generator, state_update_blocks
 from model.utils import update_from_signal
+from model.utils.state_mutation import StateMutation
 
 # raise numpy warnings as errors
 np.seterr(all='raise')
@@ -143,7 +145,13 @@ class MentoExchangeGenerator(Generator):
 
         return buy_amount
 
-    def exchange(self, exchange: MentoExchange, sell_amount, sell_reserve_asset, prev_state):
+    def exchange(
+        self, 
+        exchange: MentoExchange, 
+        sell_amount: int, 
+        sell_reserve_asset: bool, 
+        state: StateVariables
+    ) -> Tuple[Balance, Balance, StateMutation]:
         """
         Update the simulation state with a trade between the reserve currency and stable
         """
@@ -151,7 +159,7 @@ class MentoExchangeGenerator(Generator):
         assert config is not None
 
         buy_amount = self.get_buy_amount(
-            exchange, sell_amount, sell_reserve_asset, prev_state)
+            exchange, sell_amount, sell_reserve_asset, state)
 
         if sell_reserve_asset:
             delta_stable = -buy_amount
@@ -160,7 +168,7 @@ class MentoExchangeGenerator(Generator):
             delta_stable = sell_amount
             delta_reserve_asset = -buy_amount
 
-        prev_bucket = prev_state["mento_buckets"][exchange]
+        prev_bucket = state["mento_buckets"][exchange]
         next_bucket = MentoBuckets(
             stable=prev_bucket['stable'] + delta_stable,
             reserve_asset=prev_bucket['reserve_asset'] + delta_reserve_asset
@@ -172,33 +180,37 @@ class MentoExchangeGenerator(Generator):
         with CollateralProviderContract(
             exchange=exchange, 
             config=self.configs[exchange]
-        ).set_state(prev_state) as cp_contract:
+        ).set_state(state) as cp_contract:
             if sell_reserve_asset:
                 delta_cp_stable = -1 * min(buy_amount, cp_contract.stable_bucket)
                 delta_cp_reserve_asset = -1 * (delta_cp_stable / buy_amount) * sell_amount
             else:
-                delta_cp_reserve_asset = -1 * min(buy_amount, cp_contract.reserve_asset)
+                delta_cp_reserve_asset = -1 * min(buy_amount, cp_contract.reserve_asset_bucket)
                 delta_cp_stable = -1 * (delta_cp_reserve_asset / buy_amount) * sell_amount
             
-            cp_contract.rebalance(delta_cp_reserve_asset, delta_cp_stable)
+            # cp_contract.rebalance(delta_cp_reserve_asset, delta_cp_stable)
             next_cp_state = CollateralProviderState(
-                stable_bucket=cp_contract.stable_bucket + delta_cp_stable
-                reserve_asset_bucket=cp_contract.reserve_asset_bucket= + delta_cp_reserve_asset
+                stable_bucket=cp_contract.stable_bucket + delta_cp_stable,
+                reserve_asset_bucket=cp_contract.reserve_asset_bucket + delta_cp_reserve_asset
             )
-
+        
 
         reserve_delta = Balance({
             config.reserve_asset: -1 * (delta_reserve_asset - delta_cp_reserve_asset),
             config.stable: -1 * (delta_stable - delta_cp_stable)
         })
 
-        delta = Balance({
+        account_delta = Balance({
             config.reserve_asset: -1 * delta_reserve_asset,
             config.stable: -1 * delta_stable
         })
 
+
         return (
-            next_bucket, 
-            delta,
-            next_cp_state
-            )
+            account_delta,
+            reserve_delta,
+            StateMutation().add(
+                ["mento_buckets", exchange], next_bucket
+            ).add(
+                ["collateral_provider", exchange], next_cp_state
+            ))

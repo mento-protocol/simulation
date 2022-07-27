@@ -2,13 +2,15 @@
 Module that handles the collateral provider contract
 """
 
-from typing import Dict
+from typing import Dict, Tuple
 from model.entities.account import Account
+from model.entities.balance import Balance
 from model.state_variables import StateVariables
 from model.types.base import CollateralProviderState, MentoExchange
 from model.types.configs import MentoExchangeConfig
 from model.utils.generator import Generator
 from model.entities.collateral_provider_contract import CollateralProviderContract
+from model.utils.state_mutation import StateMutation
 
 
 class CollateralProviderGenerator(Generator):
@@ -28,7 +30,7 @@ class CollateralProviderGenerator(Generator):
         exchange: MentoExchange,
         account: Account,
         total_to_deposit_in_reserve_asset: float
-    ) -> CollateralProviderState:
+    ) -> Tuple[Balance, StateMutation]:
         next_state, account_delta = self.contracts.get(exchange).deposit(state, total_to_deposit_in_reserve_asset)
         account_balance_after_deposit = account.balance + account_delta
         assert (
@@ -36,8 +38,11 @@ class CollateralProviderGenerator(Generator):
             "Account doesn't have enough balance to deposit"
         )
 
-        account.balance = account_balance_after_deposit
-        return next_state
+        # account.balance = account_balance_after_deposit
+        return (
+            account_delta,
+            StateMutation().add(["collateral_provider", exchange], next_state)
+        )
 
     def withdraw(
         self,
@@ -45,7 +50,7 @@ class CollateralProviderGenerator(Generator):
         exchange: MentoExchange,
         account: Account,
         cp_tokens_to_withdraw: float
-    ) -> CollateralProviderState:
+    ) -> Tuple[Balance, StateMutation]:
         next_state, account_delta = self.contracts.get(exchange).withdraw(state, cp_tokens_to_withdraw)
         account_balance_after_deposit = account.balance + account_delta
         assert (
@@ -53,5 +58,8 @@ class CollateralProviderGenerator(Generator):
             "Account doesn't have enough balance to deposit"
         )
 
-        account.balance = account_balance_after_deposit
-        return next_state
+        # account.balance = account_balance_after_deposit
+        return (
+            account_delta,
+            StateMutation().add(["collateral_provider", exchange], next_state)
+        )

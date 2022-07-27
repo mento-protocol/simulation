@@ -80,5 +80,6 @@ initial_state = StateVariables(
     reserve_balance_in_usd=0.0,
     floating_supply_stables_in_usd=0.0,
     reserve_ratio=0.0,
-    collateralisation_ratio=0.0
+    collateralisation_ratio=0.0,
+    collateral_provider={}
 )
